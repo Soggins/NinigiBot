@@ -61,7 +61,9 @@ module.exports = async (client, message) => {
             };
         };
 
-        if (!message.channel.permissionsFor(message.guild.me).has("SEND_MESSAGES")) return;
+        if (message.guild) {
+            if (!message.channel.permissionsFor(message.guild.me).has("SEND_MESSAGES")) return;
+        };
 
         // Starboard functionality
         message.awaitReactions(reaction => reaction.emoji.name == "⭐", { max: globalVars.starboardLimit, time: 3600000 }).then(async collected => {
