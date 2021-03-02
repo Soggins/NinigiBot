@@ -1,10 +1,12 @@
 module.exports.run = async (client, message, args) => {
     try {
-        let pizzapi = require('domino');
+        let pizzapi = require('dominos');
         const { DMAllowed } = require('../../database/dbObjects');
 
         var DMAllowedUser = await DMAllowed.findOne({ where: { user_id: message.author.id } });
         if (!DMAllowedUser) await DMAllowed.upsert({ user_id: message.author.id });
+
+        // Development on this is currently halted because the `dominos` package is absolute shit and won't even install properly
 
         message.channel.send(`> Okay, I will try to DM you now to take care of your order, ${message.author}.`);
         let initDM = await message.author.send(`> Please enter your postal code, ${message.author}.`);
@@ -24,7 +26,8 @@ module.exports.run = async (client, message, args) => {
 
             })
             .catch(async (error) => {
-                console.log(error)
+                console.log(error);
+                DMAllowedUser = await DMAllowed.findOne({ where: { user_id: message.author.id } });
                 await DMAllowedUser.destroy();
                 return message.author.dmChannel.send(`> An error occurred or your order timed out, please try again, ${message.author}.`);
             });
