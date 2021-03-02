@@ -1,3 +1,5 @@
+const { config } = require('../commands/mod/purge');
+
 const talkedRecently = new Set();
 
 module.exports = async (client, message) => {
@@ -8,9 +10,11 @@ module.exports = async (client, message) => {
         const { bank } = require('../database/bank');
         let secondCharacter = message.content.charAt(1);
 
-        const { DisabledChannels, StarboardChannels, Prefixes } = require('../database/dbObjects');
+        const { DisabledChannels, StarboardChannels, Prefixes, DMAllowed } = require('../database/dbObjects');
         const dbChannels = await DisabledChannels.findAll();
         const channels = dbChannels.map(channel => channel.channel_id);
+        const dbAllowedDMs = await DMAllowed.findAll();
+        const allowedDMs = dbAllowedDMs.map(allowedDM => allowedDM.user_id);
         let prefix = false;
         if (message.guild) prefix = await Prefixes.findOne({ where: { server_id: message.guild.id } });
         if (prefix) {
@@ -32,27 +36,29 @@ module.exports = async (client, message) => {
             };
         };
 
-        // Ignore commands in DMs
-        if (message.channel.type == "dm" || !message.guild) {
-            if (message.author.bot) return;
-            if (message.content.indexOf(prefix) == 0) {
-                message.author.send(`> Sorry ${message.author}, you're not allowed to use commands in private messages!`);
+        if (!allowedDMs.includes(message.author.id) && message.author.id !== client.config.ownerID) {
+            // Ignore commands in DMs
+            if (message.channel.type == "dm" || !message.guild) {
+                if (message.author.bot) return;
+                if (message.content.indexOf(prefix) == 0) {
+                    message.author.send(`> Sorry ${message.author}, you're not allowed to use commands in private messages!`);
+                };
+                // Send message contents to dm channel
+                let DMChannel = client.channels.cache.get(client.config.devChannelID);
+                let avatar = message.author.displayAvatarURL({ format: "png", dynamic: true });
+                const dmEmbed = new Discord.MessageEmbed()
+                    .setColor(globalVars.embedColor)
+                    .setAuthor(`DM Message`, avatar)
+                    .setThumbnail(avatar)
+                    .addField(`Author:`, message.author.tag, false)
+                    .addField(`Author ID:`, message.author.id, false);
+                if (message.content) dmEmbed.addField(`Message content:`, message.content, false);
+                dmEmbed
+                    .setImage(messageImage)
+                    .setFooter(client.user.tag)
+                    .setTimestamp();
+                return DMChannel.send(dmEmbed);
             };
-            // Send message contents to dm channel
-            let DMChannel = client.channels.cache.get(client.config.devChannelID);
-            let avatar = message.author.displayAvatarURL({ format: "png", dynamic: true });
-            const dmEmbed = new Discord.MessageEmbed()
-                .setColor(globalVars.embedColor)
-                .setAuthor(`DM Message`, avatar)
-                .setThumbnail(avatar)
-                .addField(`Author:`, message.author.tag, false)
-                .addField(`Author ID:`, message.author.id, false);
-            if (message.content) dmEmbed.addField(`Message content:`, message.content, false);
-            dmEmbed
-                .setImage(messageImage)
-                .setFooter(client.user.tag)
-                .setTimestamp();
-            return DMChannel.send(dmEmbed);
         };
 
         if (!message.channel.permissionsFor(message.guild.me).has("SEND_MESSAGES")) return;

@@ -27,6 +27,7 @@ const LogChannels = require('./database/models/global/LogChannels')(sequelize, S
 const StarboardChannels = require('./database/models/global/StarboardChannels')(sequelize, Sequelize.DataTypes);
 const VCTextChannels = require('./database/models/global/VCTextChannels')(sequelize, Sequelize.DataTypes);
 const Prefixes = require('./database/models/global/Prefixes')(sequelize, Sequelize.DataTypes);
+const DMAllowed = require('./database/models/global/DMAllowed')(sequelize, Sequelize.DataTypes);
 
 const CurrencyShop = require('./database/models/data/CurrencyShop')(sequelize, Sequelize.DataTypes);
 const Equipments = require('./database/models/data/Equipments')(sequelize, Sequelize.DataTypes);
@@ -48,6 +49,7 @@ const syncDatabase = async () => {
         await LogChannels.sync({ alter: true });
         await StarboardChannels.sync({ alter: true });
         await Prefixes.sync({ alter: true });
+        await DMAllowed.sync({ alter: true });
 
         await UserItems.sync({ alter: true });
         await UserFoods.sync({ alter: true });
