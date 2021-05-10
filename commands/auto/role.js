@@ -2,8 +2,6 @@ module.exports.run = async (client, message, args) => {
     // Import globals
     let globalVars = require('../../events/ready');
     try {
-        if (!message.guild.me.hasPermission("MANAGE_ROLES")) return message.channel.send(`> Sorry, I don't have permissions to edit roles, ${message.author}.`);
-
         const { EligibleRoles, Prefixes } = require('../../database/dbObjects');
         let prefix = await Prefixes.findOne({ where: { server_id: message.guild.id } });
         if (prefix) {
@@ -48,6 +46,8 @@ module.exports.run = async (client, message, args) => {
             roleHelpMessage = `${roleHelpMessage}
 Please don't tag these roles, just put the name.
 Example: \`${prefix}role Minecraft\``;
+
+            if (roleHelpMessage.length > 2000) return message.channel.send(`> Your list of self-assignable roles is too long to fit in a single message. Consider removing some, ${message.author}.`);
 
             let avatar = client.user.displayAvatarURL({ format: "png", dynamic: true });
 

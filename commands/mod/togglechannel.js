@@ -2,7 +2,8 @@ module.exports.run = async (client, message) => {
     // Import globals
     let globalVars = require('../../events/ready');
     try {
-        if (!message.member.hasPermission("MANAGE_CHANNELS") && message.author.id !== client.config.ownerID) return message.reply(globalVars.lackPerms);
+        const isAdmin = require('../../util/isAdmin');
+        if (!message.member.hasPermission("MANAGE_CHANNELS") && !isAdmin(message.member, client)) return message.reply(globalVars.lackPerms);
 
         const { DisabledChannels } = require('../../database/dbObjects');
 
@@ -15,10 +16,10 @@ module.exports.run = async (client, message) => {
         } else {
             subCommand = message.channel.id;
         };
+
         if (!channel) channel = message.guild.channels.cache.find(channel => channel.name == subCommand);
         if (!channel) channel = message.guild.channels.cache.find(channel => subCommand.includes(channel.id));
         if (!channel) channel = message.channel;
-
 
         let channelName = channel.name.toLowerCase();
         let channelID = await DisabledChannels.findOne({ where: { channel_id: channel.id } });

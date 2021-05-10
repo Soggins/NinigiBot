@@ -7,18 +7,21 @@ module.exports = async (client) => {
         const storedBalances = await Users.findAll();
         storedBalances.forEach(b => bank.currency.set(b.user_id, b));
 
-        console.log(`Loaded a total of ${client.commands.size} commands!`);
-        console.log(`Ready to serve in ${client.channels.cache.size} channels on ${client.guilds.cache.size} servers, for a total of ${client.users.cache.size} (cached) users.`);
-        console.log(`Connected as ${client.user.tag}.`);
-
         // Set bot status
         client.user.setPresence({ activity: { name: 'in Sinnoh' }, status: 'idle' });
 
         // List servers the bot is connected to
         console.log("Servers:");
         client.guilds.cache.forEach((guild) => {
-            console.log(' - ' + guild.name);
+            console.log(`-${guild.name}`);
         });
+
+        console.log(`Commands: ${client.commands.size}`);
+        console.log(`Guilds: ${client.guilds.cache.size}`);
+        console.log(`Channels: ${client.channels.cache.size}`);
+        console.log(`Users: ${client.users.cache.size} (cached)`);
+
+        console.log(`Successfully connected as ${client.user.tag}.`);
 
     } catch (e) {
         // log error
@@ -32,8 +35,8 @@ module.exports.currency = "💰";
 module.exports.embedColor = "#219DCD";
 module.exports.lackPerms = `you do not have the required permissions to do this.`;
 module.exports.prefix = "?";
-// module.exports.prefix = "!"; // Testing
-module.exports.eventChannelID = "665274079397281835";
+module.exports.eventChannelID = "752626723345924157"; // General2
+//module.exports.eventChannelID = "665274079397281835"; // Old stan channel
 //module.exports.eventChannelID = "593014621095329812";  // Testing
 module.exports.stanRole = "stan";
 module.exports.starboardLimit = 3;

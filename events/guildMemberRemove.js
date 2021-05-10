@@ -11,10 +11,9 @@ module.exports = async (client, member) => {
 
         let user = client.users.cache.get(member.id);
         let avatar = user.displayAvatarURL({ format: "png", dynamic: true });
-        avatarExecutor = avatar;
+        let icon = member.guild.iconURL({ format: "png", dynamic: true });
 
         let embedAuthor = `Member Left 💔`;
-        let embedFooter = `We'll miss you, ${user.tag}!`;
         let reasonText = "Not specified.";
         let kicked = false;
 
@@ -26,24 +25,31 @@ module.exports = async (client, member) => {
 
         if (kickLog) {
             if (kickLog.createdAt > member.joinedAt) {
-                let { executor, target, reason } = kickLog;
+                var { executor, target, reason } = kickLog;
                 if (target.id !== member.id) return;
                 kicked = true;
                 if (reason) reasonText = reason;
-                avatarExecutor = executor.displayAvatarURL({ format: "png", dynamic: true });
+                icon = executor.displayAvatarURL({ format: "png", dynamic: true });
                 embedAuthor = `Member Kicked 💔`;
-                embedFooter = `${target.tag} got kicked by ${executor.tag}`;
             };
         };
 
         const leaveEmbed = new Discord.MessageEmbed()
             .setColor(globalVars.embedColor)
-            .setAuthor(embedAuthor, avatarExecutor)
+            .setAuthor(embedAuthor, icon)
             .setThumbnail(avatar)
-            .addField(`User:`, `${user} (${user.id})`, false)
-        if (kickLog && kicked == true) leaveEmbed.addField(`Reason:`, reasonText, false)
+            .setDescription(`${member.guild.name} now has ${member.guild.memberCount} members.`)
+            .addField(`User: `, `${user} (${user.id})`, false);
+        if (kicked == true) {
+            leaveEmbed.addField(`Reason:`, reasonText, false)
+            try {
+                leaveEmbed.addField(`Kicked by:`, `${executor.tag} (${executor.id})`, false);
+            } catch (e) {
+                // console.log(e);
+            };
+        };
         leaveEmbed
-            .setFooter(embedFooter)
+            .setFooter(member.user.tag)
             .setTimestamp();
 
         return log.send(leaveEmbed);

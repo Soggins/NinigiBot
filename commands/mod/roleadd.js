@@ -4,7 +4,8 @@ module.exports.run = async (client, message, args) => {
     try {
         const { EligibleRoles } = require('../../database/dbObjects');
 
-        if (!message.member.hasPermission("MANAGE_ROLES") && message.author.id !== client.config.ownerID) return message.reply(globalVars.lackPerms);
+        const isAdmin = require('../../util/isAdmin');
+        if (!message.member.hasPermission("MANAGE_ROLES") && !isAdmin(message.member, client)) return message.reply(globalVars.lackPerms);
 
         const requestRole = args.join(' ').toLowerCase();
 
@@ -14,7 +15,6 @@ module.exports.run = async (client, message, args) => {
         let roleID = await EligibleRoles.findOne({ where: { role_id: role.id, name: requestRole } });
 
         if (role.managed == true) return message.channel.send(`> I can't manage the **${role.name}** role because it is being automatically managed by an integration, ${message.author}.`);
-        if (message.guild.me.roles.highest.comparePositionTo(role) <= 0) return message.channel.send(`> I can't manage the **${role.name}** role because it is above my highest role, ${message.author}.`);
 
         if (roleID) {
             let roleTag = role.name;

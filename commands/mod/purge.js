@@ -2,8 +2,8 @@ exports.run = (client, message, args) => {
     // Import globals
     let globalVars = require('../../events/ready');
     try {
-        if (!message.member.hasPermission("MANAGE_MESSAGES") && message.author.id !== client.config.ownerID) return message.reply(globalVars.lackPerms);
-        if (!message.channel.permissionsFor(message.guild.me).has("MANAGE_MESSAGES")) return message.channel.send(`> I lack the required permissions to delete messages, ${message.author}.`);
+        const isAdmin = require('../../util/isAdmin');
+        if (!message.member.hasPermission("MANAGE_MESSAGES") && !isAdmin(message.member, client)) return message.reply(globalVars.lackPerms);
 
         let numberFromMessage = args[0];
 

@@ -13,9 +13,11 @@ module.exports = async (client, guild, user) => {
             limit: 1,
             type: 'MEMBER_BAN_ADD',
         });
+
         const banLog = fetchedLogs.entries.first();
         let { executor, target, reason } = banLog;
         if (reason == null) reason = "Not specified.";
+        let bannedBy = `${executor.tag} (${executor.id})`;
 
         if (target.id !== user.id) return;
         let avatarExecutor = executor.displayAvatarURL({ format: "png", dynamic: true });
@@ -25,9 +27,11 @@ module.exports = async (client, guild, user) => {
             .setColor(globalVars.embedColor)
             .setAuthor(`Member Banned 💔`, avatarExecutor)
             .setThumbnail(avatarTarget)
-            .addField(`User:`, `${user} (${user.id})`, false)
+            .setDescription(`${guild.name} now has ${guild.memberCount} members.`)
+            .addField(`User:`, `${target} (${target.id})`, false)
             .addField(`Reason:`, reason, false)
-            .setFooter(`${target.tag} got banned by ${executor.tag}`)
+            .addField(`Banned by:`, bannedBy, false)
+            .setFooter(target.tag)
             .setTimestamp();
 
         return log.send(banEmbed);

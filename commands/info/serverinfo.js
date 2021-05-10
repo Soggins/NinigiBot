@@ -4,15 +4,10 @@ module.exports.run = async (client, message) => {
     // Import globals
     let globalVars = require('../../events/ready');
     try {
-        if (!message.channel.permissionsFor(message.guild.me).has("EMBED_LINKS")) return message.channel.send(`> I can't run this command because I don't have permissions to send embedded messages, ${message.author}.`);
-
         const Discord = require("discord.js");
         const ShardUtil = new Discord.ShardClientUtil(client, "process");
 
-        let args = message.content.split(' ');
-        let guildID = args[1];
-        let guild = client.guilds.cache.get(guildID);
-        if (!guild) guild = message.guild;
+        let guild = message.guild;
 
         let memberFetch = await guild.members.fetch();
         let humanMembers = memberFetch.filter(member => !member.user.bot).size;
@@ -81,8 +76,7 @@ module.exports.run = async (client, message) => {
         };
         if (guild.partnered) emoteMax = "500";
 
-        let icon = null;
-        if (guild.iconURL()) icon = guild.iconURL({ format: "png", dynamic: true });
+        let icon = guild.iconURL({ format: "png", dynamic: true });
         let banner = null;
         if (guild.bannerURL()) banner = guild.bannerURL({ format: "png" });
 
@@ -96,7 +90,7 @@ module.exports.run = async (client, message) => {
 
         var channelCount = 0;
         guild.channels.cache.forEach(channel => {
-            if (channel.type == "voice" || channel.type == "text") channelCount += 1;
+            if (channel.type != "category") channelCount += 1;
         });
 
         const serverEmbed = new Discord.MessageEmbed()

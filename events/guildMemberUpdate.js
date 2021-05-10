@@ -24,13 +24,14 @@ module.exports = async (client, member, newMember) => {
         let roleDB = await PersonalRoles.findOne({ where: { server_id: member.guild.id, user_id: member.id } });
         if (!newMember.premiumSince && serverID && roleDB && !member.hasPermission("MANAGE_ROLES")) await deleteBoosterRole();
 
+        let icon = member.guild.iconURL({ format: "png", dynamic: true });
         let avatar = user.displayAvatarURL({ format: "png", dynamic: true });
 
         switch (updateCase) {
             case "nickname":
                 topText = "Nickname Changed ⚒️";
                 if (member.nickname && newMember.nickname) {
-                    changeText = `**${member.nickname}** => **${newMember.nickname}**.`;
+                    changeText = `Old: **${member.nickname}**\nNew:**${newMember.nickname}**.`;
                 } else if (newMember.nickname) {
                     changeText = `New: **${newMember.nickname}**.`;
                 } else {
@@ -43,7 +44,7 @@ module.exports = async (client, member, newMember) => {
                 break;
             case "nitroEnd":
                 topText = "Stopped Nitro Boosting ⚒️";
-                changeText = `**${member.guild.name}** now has ${member.guild.premiumSubscriptionCount} Nitro Boosts.`;
+                changeText = `**${member.guild.name}** will lose this Nitro Boost in 3 days.`;
                 break;
             default:
                 topText = "Undefined guild member update event.";
@@ -53,7 +54,7 @@ module.exports = async (client, member, newMember) => {
 
         const updateEmbed = new Discord.MessageEmbed()
             .setColor(globalVars.embedColor)
-            .setAuthor(topText, avatar)
+            .setAuthor(topText, icon)
             .setThumbnail(avatar)
             .setDescription(changeText)
             .addField(`User:`, `${user} (${user.id})`)
