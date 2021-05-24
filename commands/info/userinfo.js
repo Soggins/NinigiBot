@@ -1,23 +1,29 @@
-module.exports.run = async (client, message) => {
+module.exports.run = async (client, message, args = []) => {
     // Import globals
     let globalVars = require('../../events/ready');
     try {
+        const sendMessage = require('../../util/sendMessage');
         const Discord = require("discord.js");
         const { bank } = require('../../database/bank');
         const { Users } = require('../../database/dbObjects');
+        const checkDays = require('../../util/checkDays');
 
         let memberFetch = await message.guild.members.fetch();
-        let user = message.mentions.users.first();
-        let member = message.mentions.members.first();
+
+        let user;
+        let member;
+        if (message.mentions) {
+            user = message.mentions.users.first();
+            member = message.mentions.members.first();
+        };
 
         if (!user) {
-            const input = message.content.split(` `, 2);
-            let userID = input[1];
+            let userID = args[0];
             user = client.users.cache.get(userID);
         };
 
         if (!user) {
-            user = message.author;
+            user = message.member.user;
         };
 
         if (!member) {
@@ -25,7 +31,7 @@ module.exports.run = async (client, message) => {
         };
 
         let memberCache = memberFetch.get(user.id);
-        if (!memberCache) return message.channel.send(`> No member information could be found for this user, ${message.author}.`);
+        if (!memberCache) return sendMessage(client, message, `No member information could be found for this user.`);
 
         // Balance check
         let userBalance = `${Math.floor(bank.currency.getBalance(user.id))}${globalVars.currency}`;
@@ -40,7 +46,7 @@ module.exports.run = async (client, message) => {
         let shortenedRoles = false;
         if (memberRoles.size !== 0) {
             rolesSorted = await memberRoles.sort((r, r2) => r2.position - r.position).array().join(", ");
-            for (i = rolesSorted.length; i > 1000; i = rolesSorted.length) {
+            for (i = rolesSorted.length; i > 1024; i = rolesSorted.length) {
                 rolesSorted = rolesSorted.split(", ");
                 await rolesSorted.pop();
                 rolesSorted = rolesSorted.join(", ");
@@ -109,6 +115,14 @@ module.exports.run = async (client, message) => {
         // JoinRank
         let joinRank = `${getJoinRank(user.id, message.guild) + 1}/${message.guild.memberCount}`;
 
+        // Check Days
+        let daysJoined = await checkDays(memberCache.joinedAt);
+        let daysBoosting;
+        if (memberCache.premiumSince > 0) {
+            daysBoosting = await checkDays(memberCache.premiumSince);
+        };
+        let daysCreated = await checkDays(user.createdAt);
+
         const profileEmbed = new Discord.MessageEmbed()
             .setColor(globalVars.embedColor)
             .setAuthor(`${user.tag} (${user.id})`, avatar)
@@ -124,27 +138,17 @@ module.exports.run = async (client, message) => {
         profileEmbed
             .addField("Join ranking:", joinRank, true)
             .addField("Roles:", rolesSorted, false)
-            .addField("Joined at:", `${memberCache.joinedAt.toUTCString().substr(5,)}
-${checkDays(memberCache.joinedAt)}`, true);
-        if (memberCache.premiumSince > 0) profileEmbed.addField(`Boosting since:`, `${memberCache.premiumSince.toUTCString().substr(5,)}
-${checkDays(memberCache.premiumSince)}`, true);
+            .addField("Joined at:", `${memberCache.joinedAt.toUTCString().substr(5,)}\n${daysJoined}`, true);
+        if (memberCache.premiumSince > 0) profileEmbed.addField(`Boosting since:`, `${memberCache.premiumSince.toUTCString().substr(5,)}\n${daysBoosting}`, true);
         profileEmbed
-            .addField("Created at:", `${user.createdAt.toUTCString().substr(5,)}
-${checkDays(user.createdAt)}`, true)
-            .setFooter(message.author.tag)
+            .addField("Created at:", `${user.createdAt.toUTCString().substr(5,)}\n${daysCreated}`, true)
+            .setFooter(message.member.user.tag)
             .setTimestamp();
 
-        return message.channel.send(profileEmbed);
-
-        function checkDays(date) {
-            let now = new Date();
-            let diff = now.getTime() - date.getTime();
-            let days = Math.floor(diff / 86400000);
-            return days + (days == 1 ? " day" : " days") + " ago";
-        };
+        return sendMessage(client, message, null, profileEmbed);
 
         function getJoinRank(userID, guild) {
-            if (!guild.member(userID)) return;
+            if (!guild.members.cache.get(userID)) return;
             // Sort all users by join time
             let arr = guild.members.cache.array();
             arr.sort((a, b) => a.joinedAt - b.joinedAt);
@@ -164,5 +168,15 @@ ${checkDays(user.createdAt)}`, true)
 
 module.exports.config = {
     name: "userinfo",
-    aliases: ["user", "profile"]
+    aliases: ["user", "profile"],
+    description: "Displays information about a specified user.",
+    options: [{
+        name: "user-mention",
+        type: "MENTIONABLE",
+        description: "Specify user by mention."
+    }, {
+        name: "user-id",
+        type: "STRING",
+        description: "Specify user by ID."
+    }]
 };

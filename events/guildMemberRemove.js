@@ -9,6 +9,8 @@ module.exports = async (client, member) => {
         let log = member.guild.channels.cache.find(channel => channel.id == logChannel.channel_id);
         if (!log) return;
 
+        await client.users.fetch(member.id);
+
         let user = client.users.cache.get(member.id);
         let avatar = user.displayAvatarURL({ format: "png", dynamic: true });
         let icon = member.guild.iconURL({ format: "png", dynamic: true });
@@ -38,7 +40,7 @@ module.exports = async (client, member) => {
             .setColor(globalVars.embedColor)
             .setAuthor(embedAuthor, icon)
             .setThumbnail(avatar)
-            .setDescription(`${member.guild.name} now has ${member.guild.memberCount} members.`)
+            .setDescription(`**${member.guild.name}** now has ${member.guild.memberCount} members.`)
             .addField(`User: `, `${user} (${user.id})`, false);
         if (kicked == true) {
             leaveEmbed.addField(`Reason:`, reasonText, false)

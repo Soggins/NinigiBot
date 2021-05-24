@@ -4,6 +4,7 @@ module.exports.run = async (client, message) => {
     // Import globals
     let globalVars = require('../../events/ready');
     try {
+        const sendMessage = require('../../util/sendMessage');
         const { Prefixes } = require('../../database/dbObjects');
         let prefix = await Prefixes.findOne({ where: { server_id: message.guild.id } });
         if (prefix) {
@@ -82,12 +83,15 @@ module.exports.run = async (client, message) => {
             if (channel.type != "category") channelCount += 1;
         });
 
+        // Owner
+        let owner = client.users.cache.get(client.config.ownerID);
+
         const botEmbed = new Discord.MessageEmbed()
             .setColor(globalVars.embedColor)
             .setAuthor(client.user.username, avatar)
             .setThumbnail(avatar)
             .addField("Account:", client.user, true)
-            .addField("Owner:", "Glaze#6669", true)
+            .addField("Owner:", owner.tag, true)
             .addField("Prefix:", prefix, true);
         if (client.shard) botEmbed.addField("Shards:", ShardUtil.count, true);
         botEmbed
@@ -95,14 +99,14 @@ module.exports.run = async (client, message) => {
             .addField("Users:", totalMembers, true)
             .addField("Channels:", channelCount, true)
             .addField("Code:", "[Github](https://github.com/Glazelf/NinigiBot 'Ninigi Github')", true)
-            .addField("Bot Invite:", "[Invite](https://discordapp.com/oauth2/authorize?client_id=592760951103684618&scope=bot&permissions=8 'Bot Invite')", true)
+            .addField("Bot Invite:", `[Invite](https://discordapp.com/oauth2/authorize?client_id=${client.user.id}&scope=bot&permissions=8 'Bot Invite')`, true)
             .addField("Uptime:", uptime, false)
             .addField("Created at:", `${client.user.createdAt.toUTCString().substr(5,)}
 ${checkDays(client.user.createdAt)}`, false)
-            .setFooter(message.author.tag)
+            .setFooter(message.member.user.tag)
             .setTimestamp();
 
-        return message.channel.send(botEmbed);
+        return sendMessage(client, message, null, botEmbed);
 
         function checkDays(date) {
             let now = new Date();
@@ -146,5 +150,6 @@ ${checkDays(client.user.createdAt)}`, false)
 
 module.exports.config = {
     name: "botinfo",
-    aliases: ["bot", "info"]
+    aliases: ["bot", "info"],
+    description: `Displays info on this bot.`
 };

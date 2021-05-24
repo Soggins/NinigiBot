@@ -4,6 +4,7 @@ module.exports.run = async (client, message) => {
     // Import globals
     let globalVars = require('../../events/ready');
     try {
+        const sendMessage = require('../../util/sendMessage');
         const Discord = require("discord.js");
         const ShardUtil = new Discord.ShardClientUtil(client, "process");
 
@@ -80,24 +81,36 @@ module.exports.run = async (client, message) => {
         let banner = null;
         if (guild.bannerURL()) banner = guild.bannerURL({ format: "png" });
 
-        let ownerTag = guild.owner.user.tag;
-        if (guild == message.guild) ownerTag = guild.owner.user;
+        let guildOwner = await guild.fetchOwner()
 
         if (guild.rulesChannel) {
             var rules = guild.rulesChannel;
             if (guild !== message.guild) rules = `#${guild.rulesChannel.name}`;
         };
 
-        var channelCount = 0;
+        let channelCount = 0;
         guild.channels.cache.forEach(channel => {
             if (channel.type != "category") channelCount += 1;
         });
 
+        let boostGoal;
+        if (guild.premiumSubscriptionCount < 2) {
+            boostGoal = "/2";
+        } else if (guild.premiumSubscriptionCount < 15) {
+            boostGoal = "/15";
+        } else if (guild.premiumSubscriptionCount < 30) {
+            boostGoal = "/30";
+        } else {
+            boostGoal = "";
+        };
+
         const serverEmbed = new Discord.MessageEmbed()
             .setColor(globalVars.embedColor)
             .setAuthor(`${guild.name} (${guild.id})`, icon)
-            .setThumbnail(icon)
-            .addField("Owner:", ownerTag, true)
+            .setThumbnail(icon);
+        if (guild.description) serverEmbed.setDescription(guild.description);
+        serverEmbed
+            .addField("Owner:", guildOwner, true)
             .addField("Region:", region[guild.region], true)
             .addField("Verification Level:", verifLevels[guild.verificationLevel], true);
         if (guild.vanityURLCode) serverEmbed.addField("Vanity Invite:", `discord.gg/${guild.vanityURLCode}`, true);
@@ -110,16 +123,16 @@ module.exports.run = async (client, message) => {
             .addField("Channels:", channelCount, true);
         if (guild.roles.cache.size > 1) serverEmbed.addField("Roles:", guild.roles.cache.size - 1, true);
         if (guild.emojis.cache.size > 0) serverEmbed.addField("Emotes:", `${guild.emojis.cache.size}/${emoteMax} 😳`, true);
-        if (guild.premiumSubscriptionCount > 0) serverEmbed.addField("Nitro Boosts:", `${guild.premiumSubscriptionCount}${nitroEmote}`, true);
+        if (guild.premiumSubscriptionCount > 0) serverEmbed.addField("Nitro Boosts:", `${guild.premiumSubscriptionCount}${boostGoal}${nitroEmote}`, true);
         if (client.shard) serverEmbed.addField("Shard:", `${shardNumber}/${ShardUtil.count}`, true);
         serverEmbed
             .addField("Created at:", `${guild.createdAt.toUTCString().substr(5,)}
 ${checkDays(guild.createdAt)}`, false)
             .setImage(banner)
-            .setFooter(message.author.tag)
+            .setFooter(message.member.user.tag)
             .setTimestamp();
 
-        return message.channel.send(serverEmbed);
+        return sendMessage(client, message, null, serverEmbed);
 
         function checkDays(date) {
             let now = new Date();
@@ -138,5 +151,6 @@ ${checkDays(guild.createdAt)}`, false)
 
 module.exports.config = {
     name: "serverinfo",
-    aliases: ["server", "guild", "guildinfo"]
+    aliases: ["server", "guild", "guildinfo"],
+    description: "Sends info about the server.",
 };
